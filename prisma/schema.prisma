@@ -1,0 +1,492 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id            String    @id
+  name          String    @db.Text
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?   @db.Text
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  role          String?   @db.Text
+  banned        Boolean?  @default(false)
+  banReason     String?   @db.Text
+  banExpires    DateTime?
+  accounts      Account[]
+  sessions      Session[]
+
+  @@map("user")
+}
+
+model Session {
+  id             String   @id
+  expiresAt      DateTime
+  token          String   @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  ipAddress      String?  @db.Text
+  userAgent      String?  @db.Text
+  userId         String
+  impersonatedBy String?  @db.Text
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String    @db.Text
+  providerId            String    @db.Text
+  userId                String
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  idToken               String?   @db.Text
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?   @db.Text
+  password              String?   @db.Text
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String   @db.Text
+  value      String   @db.Text
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier(length: 191)])
+  @@map("verification")
+}
+
+model Faculty {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  name          String
+  image         String   @db.Text
+  qualification String   @db.Text
+  experience    String
+  domain        String   @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([name])
+  @@map("faculty")
+}
+
+model BlogPost {
+  id              String        @id @default(cuid())
+  slug            String        @unique
+  title           String
+  excerpt         String        @db.Text
+  category        String
+  coverImage      String        @db.Text
+  coverImageAlt   String
+  author          String
+  publishedAt     DateTime?
+  status          BlogStatus    @default(draft)
+  metaTitle       String?       @db.Text
+  metaDescription String?       @db.Text
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  blocks          BlogBlock[]
+  blogKeywords    BlogKeyword[]
+
+  @@index([status])
+  @@index([category])
+  @@index([publishedAt])
+  @@map("blog_post")
+}
+
+model BlogBlock {
+  id        String   @id @default(cuid())
+  postId    String
+  type      String
+  position  Int
+  content   String?  @db.LongText
+  data      String?  @db.LongText
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId, position])
+  @@map("blog_block")
+}
+
+model BlogKeyword {
+  id      String   @id @default(cuid())
+  postId  String
+  keyword String
+  post    BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@map("blog_keyword")
+}
+
+model ConclaveEvent {
+  id         String        @id @default(cuid())
+  slug       String        @unique
+  title      String
+  day        String
+  month      String
+  year       String
+  date       String
+  location   String        @db.Text
+  excerpt    String        @db.Text
+  content    String        @db.LongText
+  coverImage String        @db.Text
+  featured   Boolean       @default(false)
+  status     ContentStatus @default(published)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([status])
+  @@index([featured])
+  @@index([year])
+  @@map("conclave_event")
+}
+
+model FinalPlacementBatch {
+  id         String                  @id @default(cuid())
+  batch      String                  @unique
+  title      String
+  highlights String                  @db.LongText
+  createdAt  DateTime                @default(now())
+  updatedAt  DateTime                @updatedAt
+  charts     FinalPlacementChart[]
+  students   FinalPlacementStudent[]
+
+  @@map("final_placement_batch")
+}
+
+model FinalPlacementChart {
+  id       String                  @id @default(cuid())
+  batchId  String
+  title    String
+  position Int                     @default(0)
+  batch    FinalPlacementBatch     @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  data     FinalPlacementProfile[]
+
+  @@index([batchId, position])
+  @@map("final_placement_chart")
+}
+
+model FinalPlacementProfile {
+  id         String              @id @default(cuid())
+  chartId    String
+  category   String
+  percentage Float
+  position   Int                 @default(0)
+  chart      FinalPlacementChart @relation(fields: [chartId], references: [id], onDelete: Cascade)
+
+  @@index([chartId, position])
+  @@map("final_placement_profile")
+}
+
+model FinalPlacementStudent {
+  id       String              @id @default(cuid())
+  batchId  String
+  name     String
+  role     String
+  image    String              @db.Text
+  position Int                 @default(0)
+  batch    FinalPlacementBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId, position])
+  @@map("final_placement_student")
+}
+
+model SummerInternshipBatch {
+  id         String                    @id @default(cuid())
+  batch      String                    @unique
+  title      String
+  highlights String                    @db.LongText
+  createdAt  DateTime                  @default(now())
+  updatedAt  DateTime                  @updatedAt
+  profiles   SummerInternshipProfile[]
+
+  @@map("summer_internship_batch")
+}
+
+model SummerInternshipProfile {
+  id             String                @id @default(cuid())
+  batchId        String
+  specialization String
+  percentage     Float
+  position       Int                   @default(0)
+  batch          SummerInternshipBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId, position])
+  @@map("summer_internship_profile")
+}
+
+model CareerOpening {
+  id           String   @id @default(cuid())
+  title        String
+  department   String
+  location     String
+  description  String   @db.LongText
+  requirements String?  @db.LongText
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("career_opening")
+}
+
+model FAQ {
+  id        String   @id @default(cuid())
+  question  String   @db.Text
+  answer    String   @db.LongText
+  position  Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, position])
+  @@map("faq")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  name      String
+  role      String?
+  content   String   @db.LongText
+  image     String?  @db.Text
+  rating    Int?
+  isActive  Boolean  @default(true)
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, position])
+  @@map("review")
+}
+
+model MediaPresence {
+  id        String   @id @default(cuid())
+  title     String
+  source    String
+  url       String   @db.Text
+  image     String?  @db.Text
+  position  Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, position])
+  @@map("media_presence")
+}
+
+model HomeHero {
+  id        String   @id @default(cuid())
+  videoUrl  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("home_hero")
+}
+
+model HomeStat {
+  id        String   @id @default(cuid())
+  value     String
+  label     String
+  icon      String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
+  @@map("home_stat")
+}
+
+model HomeRecruiter {
+  id        String   @id @default(cuid())
+  imageUrl  String
+  alt       String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
+  @@map("home_recruiter")
+}
+
+model HomeAbout {
+  id           String               @id @default(cuid())
+  eyebrow      String
+  title        String
+  description1 String               @db.Text
+  description2 String?              @db.Text
+  isActive     Boolean              @default(true)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  highlights   HomeAboutHighlight[]
+
+  @@map("home_about")
+}
+
+model HomeAboutHighlight {
+  id          String    @id @default(cuid())
+  homeAboutId String
+  title       String
+  description String    @db.Text
+  icon        String
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  homeAbout   HomeAbout @relation(fields: [homeAboutId], references: [id], onDelete: Cascade)
+
+  @@index([homeAboutId])
+  @@index([sortOrder])
+  @@map("home_about_highlight")
+}
+
+model HomePlacementVideo {
+  id        String   @id @default(cuid())
+  youtubeId String
+  title     String
+  batch     String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
+  @@map("home_placement_video")
+}
+
+model HomeCampusHighlight {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  imageUrl    String
+  href        String
+  eyebrow     String
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([sortOrder])
+  @@map("home_campus_highlight")
+}
+
+model HomeProgram {
+  id        String            @id @default(cuid())
+  title     String
+  category  String
+  duration  String
+  imageUrl  String
+  href      String
+  sortOrder Int               @default(0)
+  isActive  Boolean           @default(true)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  semesters ProgramSemester[]
+
+  @@index([sortOrder])
+  @@map("home_program")
+}
+
+model ProgramSemester {
+  id        String           @id @default(cuid())
+  programId String
+  title     String
+  sortOrder Int              @default(0)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  program   HomeProgram      @relation(fields: [programId], references: [id], onDelete: Cascade)
+  subjects  ProgramSubject[]
+
+  @@index([programId, sortOrder])
+  @@map("program_semester")
+}
+
+model ProgramSubject {
+  id         String          @id @default(cuid())
+  semesterId String
+  name       String
+  code       String?
+  credits    String?
+  sortOrder  Int             @default(0)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  semester   ProgramSemester @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+
+  @@index([semesterId, sortOrder])
+  @@map("program_subject")
+}
+
+model HomeAward {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  icon        String
+  accent      String
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([sortOrder])
+  @@map("home_award")
+}
+
+model HomeCampusLife {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  icon        String
+  imageUrl    String
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([sortOrder])
+  @@map("home_campus_life")
+}
+
+model HomeRecognition {
+  id        String   @id @default(cuid())
+  title     String
+  imageUrl  String
+  alt       String
+  linkUrl   String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+enum BlogStatus {
+  draft
+  published
+}
+
+enum ContentStatus {
+  draft
+  published
+}

@@ -1,0 +1,232 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
+import { ArrowUpRight } from "lucide-react";
+
+import { lifeAtFostiimaSections } from "@/data/life-at-fostiima";
+
+export function CampusGallerySection() {
+  return (
+    <section
+      id="campus-gallery"
+      className="bg-[#f8fafc] px-5 py-16 sm:px-6 lg:px-8 lg:py-20"
+    >
+      <div className="mx-auto max-w-7xl">
+        {/* Heading */}
+        <div className="max-w-2xl">
+          <p className="mb-3 text-md font-bold uppercase tracking-[0.2em] text-[#c31e3b]">
+            Life at FOSTIIMA
+          </p>
+
+          <h2 className="text-3xl font-bold tracking-tight text-[#061a3a] sm:text-4xl">
+            Experience campus life beyond the classroom.
+          </h2>
+
+          <p className="mt-4 text-base leading-7 text-[#64748b]">
+            Explore academic, cultural, sports and industry experiences that
+            form an important part of campus life.
+          </p>
+        </div>
+
+        {/* Gallery Cards */}
+        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {lifeAtFostiimaSections.map((item) => {
+            const isLarge = item.size === "large";
+
+            return (
+              <Link
+                key={item.slug}
+                href={`/life-at-fostiima/${item.slug}`}
+                className={[
+                  "group block overflow-hidden rounded-2xl border border-[#dbe3ee] bg-white shadow-sm",
+                  "transition duration-300 hover:-translate-y-1",
+                  "hover:shadow-[0_16px_35px_rgba(6,26,58,0.10)]",
+                  isLarge ? "sm:col-span-2" : "",
+                ].join(" ")}
+              >
+                {/* Image */}
+                <GalleryImage
+                  src={item.src}
+                  alt={item.alt}
+                  title={item.title}
+                  isLarge={isLarge}
+                />
+
+                {/* Card Content */}
+                <div className="p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      {/* Title */}
+                      <h3 className="text-lg font-bold text-[#061a3a]">
+                        {item.title}
+                      </h3>
+
+                      {/* Description */}
+                      {item.description && (
+                        <p
+                          className="
+                            mt-2
+                            line-clamp-4
+                            min-h-[96px]
+                            text-sm
+                            leading-6
+                            text-[#64748b]
+                          "
+                        >
+                          {truncateWords(item.description, 20)}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Arrow */}
+                    <span
+                      className="
+                        mt-0.5
+                        flex
+                        h-9
+                        w-9
+                        shrink-0
+                        items-center
+                        justify-center
+                        rounded-full
+                        border
+                        border-[#dbe3ee]
+                        text-[#c31e3b]
+                        transition-all
+                        duration-300
+                        group-hover:border-[#c31e3b]
+                        group-hover:bg-[#c31e3b]
+                        group-hover:text-white
+                      "
+                    >
+                      <ArrowUpRight
+                        className="
+                          h-4
+                          w-4
+                          transition-transform
+                          duration-300
+                          group-hover:translate-x-0.5
+                          group-hover:-translate-y-0.5
+                        "
+                        aria-hidden="true"
+                      />
+                    </span>
+                  </div>
+
+                  {/* Explore Details */}
+                  <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[#c31e3b]">
+                    Explore Details
+                  </p>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* =====================================================
+   DESCRIPTION TRUNCATION
+===================================================== */
+
+function truncateWords(text: string, limit = 20) {
+  const words = text.trim().split(/\s+/);
+
+  if (words.length <= limit) {
+    return text;
+  }
+
+  return words.slice(0, limit).join(" ");
+}
+
+/* =====================================================
+   GALLERY IMAGE
+===================================================== */
+
+type GalleryImageProps = {
+  src: string;
+  alt: string;
+  title: string;
+  isLarge: boolean;
+};
+
+function GalleryImage({
+  src,
+  alt,
+  title,
+  isLarge,
+}: GalleryImageProps) {
+  const [hasError, setHasError] = useState(false);
+
+  return (
+    <div
+      className={[
+        "relative overflow-hidden bg-[#eef2f7]",
+        "aspect-square",
+        isLarge ? "sm:aspect-auto sm:h-80" : "",
+      ].join(" ")}
+    >
+      {hasError ? (
+        /* Image Error */
+        <div
+          className="
+            absolute
+            inset-0
+            flex
+            items-center
+            justify-center
+            overflow-hidden
+            bg-[#eef2f7]
+          "
+          role="img"
+          aria-label={`${title} image unavailable`}
+        >
+          {/* Grid Background */}
+          <div
+            className="absolute inset-0 opacity-[0.55]"
+            style={{
+              backgroundImage:
+                "linear-gradient(#94a3b8 1px, transparent 1px), linear-gradient(90deg, #94a3b8 1px, transparent 1px)",
+              backgroundSize: "28px 28px",
+            }}
+          />
+
+          {/* Error Text */}
+          <div className="relative z-10 px-6 text-center">
+            <div className="mx-auto mb-3 h-px w-10 bg-[#c31e3b]" />
+
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#061a3a]">
+              {title}
+            </p>
+
+            <p className="mt-1 text-md text-[#64748b]">
+              Image unavailable
+            </p>
+          </div>
+        </div>
+      ) : (
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes={
+            isLarge
+              ? "(max-width: 640px) 100vw, 50vw"
+              : "(max-width: 640px) 100vw, 25vw"
+          }
+          className="
+            object-cover
+            transition
+            duration-500
+            group-hover:scale-105
+          "
+          onError={() => setHasError(true)}
+        />
+      )}
+    </div>
+  );
+}
